@@ -18,7 +18,7 @@ MODEL_ARTIFACTS_PATH <- file.path(MODEL_INPUTS_OUTPUTS, "model", "artifacts")
 OHE_ENCODER_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'ohe.rds')
 PREDICTOR_FILE_PATH <- file.path(MODEL_ARTIFACTS_PATH, "predictor", "predictor.rds")
 IMPUTATION_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'imputation.rds')
-TOP_3_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_3_map.rds")
+TOP_10_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_10_map.rds")
 COLNAME_MAPPING <- file.path(MODEL_ARTIFACTS_PATH, "colname_mapping.csv")
 
 
@@ -102,21 +102,21 @@ df <- df %>% select(-all_of(c(id_feature, target_feature)))
 
 # One Hot Encoding
 if(length(categorical_features) > 0){
-    top_3_map <- list()
+    top_10_map <- list()
     for(col in categorical_features) {
-        # Get the top 3 categories for the column
-        top_3_categories <- names(sort(table(df[[col]]), decreasing = TRUE)[1:3])
+        # Get the top 10 categories for the column
+        top_10_categories <- names(sort(table(df[[col]]), decreasing = TRUE)[1:10])
 
         # Save the top 3 categories for this column
-        top_3_map[[col]] <- top_3_categories
+        top_10_map[[col]] <- top_10_categories
         # Replace categories outside the top 3 with "Other"
-        df[[col]][!(df[[col]] %in% top_3_categories)] <- "Other"
+        df[[col]][!(df[[col]] %in% top_10_categories)] <- "Other"
     }
 
     df_encoded <- dummy_cols(df, select_columns = categorical_features, remove_selected_columns = TRUE)
     encoded_columns <- setdiff(colnames(df_encoded), colnames(df))
     saveRDS(encoded_columns, OHE_ENCODER_FILE)
-    saveRDS(top_3_map, TOP_3_CATEGORIES_MAP)
+    saveRDS(top_10_map, TOP_10_CATEGORIES_MAP)
     df <- df_encoded
 }
 
@@ -172,20 +172,14 @@ df <- as.data.frame(lapply(df, as.numeric)) # Convert all columns to numeric
 dtrain <- xgb.DMatrix(data = as.matrix(df), label = target)
 
 # Train the model using XGBoost
-# You can adjust the parameters as needed. Here's a basic setup:
-
 params <- list(
   booster = "gbtree",
   objective = "reg:squarederror",
-  eta = 0.01,
+  eta = 0.3,
   gamma = 0,
-  max_depth = 6,
-  subsample = 0.5,
-  colsample_bytree = 0.5
+  max_depth = 5
 )
-
-num_rounds <- 100
-
+num_rounds <- 250
 model <- xgb.train(params = params, data = dtrain, nrounds = num_rounds)
 
 # Save the model

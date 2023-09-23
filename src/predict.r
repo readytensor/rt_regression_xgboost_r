@@ -21,7 +21,7 @@ PREDICTOR_FILE_PATH <- file.path(PREDICTOR_DIR_PATH, "predictor.rds")
 IMPUTATION_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'imputation.rds')
 PREDICTIONS_DIR <- file.path(OUTPUT_DIR, 'predictions')
 PREDICTIONS_FILE <- file.path(PREDICTIONS_DIR, 'predictions.csv')
-TOP_3_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_3_map.rds")
+TOP_10_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_10_map.rds")
 COLNAME_MAPPING <- file.path(MODEL_ARTIFACTS_PATH, "colname_mapping.csv")
 
 
@@ -66,11 +66,11 @@ df[[id_feature]] <- NULL
 # Encoding
 # We encode the data using the same encoder that we saved during training.
 if (length(categorical_features) > 0 && file.exists(OHE_ENCODER_FILE)) {
-  top_3_map <- readRDS(TOP_3_CATEGORIES_MAP)
+  top_10_map <- readRDS(TOP_10_CATEGORIES_MAP)
   encoder <- readRDS(OHE_ENCODER_FILE)
   for(col in categorical_features) {
-    # Use the saved top 3 categories to replace values outside these categories with 'Other'
-    df[[col]][!(df[[col]] %in% top_3_map[[col]])] <- "Other"
+    # Use the saved top 10 categories to replace values outside these categories with 'Other'
+    df[[col]][!(df[[col]] %in% top_10_map[[col]])] <- "Other"
   }
 
   test_df_encoded <- dummy_cols(df, select_columns = categorical_features, remove_selected_columns = TRUE)
