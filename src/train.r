@@ -58,12 +58,11 @@ df <- read.csv(file.path(TRAIN_DIR, file_name), skip = 0, col.names = col_names,
 # Data Preprocessing
 # Data preprocessing is very important before training the model, as the data may contain missing values in some cells. 
 # Moreover, most of the learning algorithms cannot work with categorical data, thus the data has to be encoded.
-# In this section we will impute the missing values and encode the categorical features. Afterwards the data will be ready to train the model.
+# In this section we will impute the missing values and encode the categorical features. 
+# We also standard scale the data, and cap the outliers.
+# Afterwards the data will be ready to train the model.
 
 # You can add your own preprocessing steps such as:
-
-# Normalization
-# Outlier removal
 # Dropping or adding features
 
 # Important note:

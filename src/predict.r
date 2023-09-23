@@ -100,13 +100,15 @@ for (feature in numeric_features) {
     df[[feature]] <- (df[[feature]] - scaling_values[[feature]]$mean) / scaling_values[[feature]]$std
 }
 
-# Outlier Capping
+# Outlier Capping for Standard Scaled Data
+lower_bound <- -4
+upper_bound <- 4
+
 for (feature in numeric_features) {
-    lower_bound <- mean(df[[feature]]) - 4*sd(df[[feature]])
-    upper_bound <- mean(df[[feature]]) + 4*sd(df[[feature]])
     df[[feature]] <- ifelse(df[[feature]] < lower_bound, lower_bound, df[[feature]])
     df[[feature]] <- ifelse(df[[feature]] > upper_bound, upper_bound, df[[feature]])
 }
+
 
 # Load the column name mapping
 colname_mapping <- read.csv(COLNAME_MAPPING)
