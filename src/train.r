@@ -135,7 +135,6 @@ for (feature in numeric_features) {
     df[[feature]] <- (df[[feature]] - feature_mean) / feature_std
 }
 
-
 # Save the scaling values for use during testing
 saveRDS(scaling_values, SCALING_FILE)
 

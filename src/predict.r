@@ -57,13 +57,15 @@ df <- read.csv(file_name, skip = 0, col.names = col_names, check.names=FALSE)
 # Note that when we work with testing data, we have to impute using the same values learned during training. This is to avoid data leakage.
 imputation_values <- readRDS(IMPUTATION_FILE)
 
-for (column in names(df)[sapply(df, function(col) any(is.na(col)))]) {
-  # Create missing indicator
-  missing_indicator_col_name <- paste(column, "is_missing", sep="_")
-  df[[missing_indicator_col_name]] <- ifelse(is.na(df[[column]]), 1, 0)
-  
-  # Impute missing values
-  df[, column][is.na(df[, column])] <- imputation_values[[column]]
+for (column in nullable_features) {
+    # Create missing indicator
+    missing_indicator_col_name <- paste(column, "is_missing", sep="_")
+    df[[missing_indicator_col_name]] <- ifelse(is.na(df[[column]]), 1, 0)
+    
+    # Impute missing values
+    if (!is.null(imputation_values[[column]])) {
+        df[, column][is.na(df[, column])] <- imputation_values[[column]]
+    }
 }
 
 # Saving the id column in a different variable and then dropping it.
@@ -108,7 +110,6 @@ for (feature in numeric_features) {
     df[[feature]] <- ifelse(df[[feature]] < lower_bound, lower_bound, df[[feature]])
     df[[feature]] <- ifelse(df[[feature]] > upper_bound, upper_bound, df[[feature]])
 }
-
 
 # Load the column name mapping
 colname_mapping <- read.csv(COLNAME_MAPPING)
