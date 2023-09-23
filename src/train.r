@@ -15,11 +15,12 @@ INPUT_SCHEMA_DIR <- file.path(INPUT_DIR, "schema")
 DATA_DIR <- file.path(INPUT_DIR, "data")
 TRAIN_DIR <- file.path(DATA_DIR, "training")
 MODEL_ARTIFACTS_PATH <- file.path(MODEL_INPUTS_OUTPUTS, "model", "artifacts")
-OHE_ENCODER_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'ohe.rds')
-PREDICTOR_FILE_PATH <- file.path(MODEL_ARTIFACTS_PATH, "predictor", "predictor.rds")
 IMPUTATION_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'imputation.rds')
 TOP_10_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_10_map.rds")
 COLNAME_MAPPING <- file.path(MODEL_ARTIFACTS_PATH, "colname_mapping.csv")
+SCALING_FILE <- file.path(MODEL_ARTIFACTS_PATH, "scaler.rds")
+OHE_ENCODER_FILE <- file.path(MODEL_ARTIFACTS_PATH, 'ohe.rds')
+PREDICTOR_FILE_PATH <- file.path(MODEL_ARTIFACTS_PATH, "predictor", "predictor.rds")
 
 
 if (!dir.exists(MODEL_ARTIFACTS_PATH)) {
@@ -78,6 +79,10 @@ df <- read.csv(file.path(TRAIN_DIR, file_name), skip = 0, col.names = col_names,
 imputation_values <- list()
 
 for (column in nullable_features) {
+    # Create missing indicator
+    missing_indicator_col_name <- paste(column, "is_missing", sep="_")
+    df[[missing_indicator_col_name]] <- ifelse(is.na(df[[column]]), 1, 0)
+    
     if (column %in% numeric_features) {
         value <- median(df[, column], na.rm = TRUE)
     } else {
@@ -118,6 +123,29 @@ if(length(categorical_features) > 0){
     saveRDS(encoded_columns, OHE_ENCODER_FILE)
     saveRDS(top_10_map, TOP_10_CATEGORIES_MAP)
     df <- df_encoded
+}
+
+# Standard Scaling
+scaling_values <- list()
+for (feature in numeric_features) {
+    feature_mean <- mean(df[[feature]], na.rm = TRUE)
+    feature_std <- sd(df[[feature]], na.rm = TRUE)
+    scaling_values[[feature]] <- list(mean = feature_mean, std = feature_std)
+    
+    # Standardize the feature
+    df[[feature]] <- (df[[feature]] - feature_mean) / feature_std
+}
+
+
+# Save the scaling values for use during testing
+saveRDS(scaling_values, SCALING_FILE)
+
+# Cap outliers
+lower_bound <- -4
+upper_bound <- 4
+for (feature in numeric_features) {
+    df[[feature]] <- ifelse(df[[feature]] < lower_bound, lower_bound, df[[feature]])
+    df[[feature]] <- ifelse(df[[feature]] > upper_bound, upper_bound, df[[feature]])
 }
 
 

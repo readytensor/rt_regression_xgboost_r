@@ -23,6 +23,7 @@ PREDICTIONS_DIR <- file.path(OUTPUT_DIR, 'predictions')
 PREDICTIONS_FILE <- file.path(PREDICTIONS_DIR, 'predictions.csv')
 TOP_10_CATEGORIES_MAP <- file.path(MODEL_ARTIFACTS_PATH, "top_10_map.rds")
 COLNAME_MAPPING <- file.path(MODEL_ARTIFACTS_PATH, "colname_mapping.csv")
+SCALING_FILE <- file.path(MODEL_ARTIFACTS_PATH, "scaler.rds")
 
 
 if (!dir.exists(PREDICTIONS_DIR)) {
@@ -55,7 +56,13 @@ df <- read.csv(file_name, skip = 0, col.names = col_names, check.names=FALSE)
 # Data preprocessing
 # Note that when we work with testing data, we have to impute using the same values learned during training. This is to avoid data leakage.
 imputation_values <- readRDS(IMPUTATION_FILE)
+
 for (column in names(df)[sapply(df, function(col) any(is.na(col)))]) {
+  # Create missing indicator
+  missing_indicator_col_name <- paste(column, "is_missing", sep="_")
+  df[[missing_indicator_col_name]] <- ifelse(is.na(df[[column]]), 1, 0)
+  
+  # Impute missing values
   df[, column][is.na(df[, column])] <- imputation_values[[column]]
 }
 
@@ -85,6 +92,20 @@ if (length(categorical_features) > 0 && file.exists(OHE_ENCODER_FILE)) {
 # Remove extra columns
     extra_cols <- setdiff(colnames(test_df_encoded), c(colnames(df), encoded_columns))
     df <- test_df_encoded[, !names(test_df_encoded) %in% extra_cols]
+}
+
+# Standard Scaling
+scaling_values <- readRDS(SCALING_FILE) # Assuming you've saved scaling values during training
+for (feature in numeric_features) {
+    df[[feature]] <- (df[[feature]] - scaling_values[[feature]]$mean) / scaling_values[[feature]]$std
+}
+
+# Outlier Capping
+for (feature in numeric_features) {
+    lower_bound <- mean(df[[feature]]) - 4*sd(df[[feature]])
+    upper_bound <- mean(df[[feature]]) + 4*sd(df[[feature]])
+    df[[feature]] <- ifelse(df[[feature]] < lower_bound, lower_bound, df[[feature]])
+    df[[feature]] <- ifelse(df[[feature]] > upper_bound, upper_bound, df[[feature]])
 }
 
 # Load the column name mapping
