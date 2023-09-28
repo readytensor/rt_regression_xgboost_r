@@ -56,24 +56,6 @@ col_names <- unlist(strsplit(header_line, split = ",")) # assuming ',' is the de
 df <- read.csv(file.path(TRAIN_DIR, file_name), skip = 0, col.names = col_names, check.names=FALSE)
 
 # Data Preprocessing
-# Data preprocessing is very important before training the model, as the data may contain missing values in some cells. 
-# Moreover, most of the learning algorithms cannot work with categorical data, thus the data has to be encoded.
-# In this section we will impute the missing values and encode the categorical features. 
-# We also standard scale the data, and cap the outliers.
-# Afterwards the data will be ready to train the model.
-
-# You can add your own preprocessing steps such as:
-# Dropping or adding features
-
-# Important note:
-# Saving the values used for imputation during training step is crucial. 
-# These values will be used to impute missing data in the testing set. 
-# This is very important to avoid the well known problem of data leakage. 
-# During testing, you should not make any assumptions about the data in hand, 
-# alternatively anything needed during the testing phase should be learned from the training phase.
-# This is why we are creating a dictionary of values used during training to reuse these values during testing.
-
-
 # Impute missing data
 imputation_values <- list()
 
