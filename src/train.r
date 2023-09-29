@@ -58,7 +58,6 @@ df <- read.csv(file.path(TRAIN_DIR, file_name), skip = 0, col.names = col_names,
 # Data Preprocessing
 # Impute missing data
 imputation_values <- list()
-
 for (column in nullable_features) {
     # Create missing indicator
     missing_indicator_col_name <- paste(column, "is_missing", sep="_")
@@ -85,7 +84,6 @@ ids <- df[, id_feature]
 target <- df[, target_feature]
 df <- df %>% select(-all_of(c(id_feature, target_feature)))
 
-
 # One Hot Encoding
 if(length(categorical_features) > 0){
     top_10_map <- list()
@@ -105,6 +103,12 @@ if(length(categorical_features) > 0){
     saveRDS(top_10_map, TOP_10_CATEGORIES_MAP)
     df <- df_encoded
 }
+
+# Remove constant columns
+constant_columns <- which(apply(df, 2, var) == 0)
+if (length(constant_columns) > 0) {
+    df <- df[,-constant_columns]
+} 
 
 # Standard Scaling
 scaling_values <- list()
@@ -155,8 +159,7 @@ sanitize_colnames <- function(names_vector) {
       indices <- which(sanitized_names == d)
       sanitized_names[indices] <- paste0(d, "_", seq_along(indices))
     }
-  }
-  
+  }  
   return(sanitized_names)
 }
 
